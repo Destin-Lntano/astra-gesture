@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#070b16">
+  <meta name="description" content="星汐 ASTRA：用手势拨动星轨，穿越立体银河，抵近一颗恒星。浏览器本地手部识别，鼠标与触屏同样可用。">
+  <title>星汐 ASTRA — 把星河握在掌心</title>
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg"><link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <canvas id="universe" aria-label="可交互的三维星空，拖动转动、滚轮缩放、轻点恒星" tabindex="0"></canvas>
+  <div class="vignette" aria-hidden="true"></div>
+  <svg class="symbol-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 2l2.6 7.4L22 12l-7.4 2.6L12 22l-2.6-7.4L2 12l7.4-2.6Z"/></symbol>
+    <symbol id="i-hand" viewBox="0 0 24 24"><path d="M8 12V5a1.5 1.5 0 0 1 3 0v6-8a1.5 1.5 0 0 1 3 0v8-6a1.5 1.5 0 0 1 3 0v7-3a1.5 1.5 0 0 1 3 0v6c0 5-2 7-6 7-3 0-4-1-6-3l-4-5a1.5 1.5 0 0 1 2-2Z"/></symbol>
+    <symbol id="i-expand" viewBox="0 0 24 24"><path d="M9 3H3v6m12-6h6v6M3 15v6h6m12-6v6h-6"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
+    <symbol id="i-reset" viewBox="0 0 24 24"><path d="M3 10a9 9 0 1 1 1 7M3 4v6h6"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="m8 4 12 8-12 8Z"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+  </defs></svg>
+
+  <header class="topbar hud">
+    <a class="brand" href="./" aria-label="星汐首页"><svg><use href="#i-star"/></svg><span>ASTRA<small>星 汐</small></span></a>
+    <div class="edition">AN INTERACTIVE COSMOS<span>手势 · 星海 · 无垠</span></div>
+    <div class="top-actions"><button class="text-button" id="help-btn">探索指南</button><button class="icon-button" id="fullscreen-btn" title="全屏观测" aria-label="全屏观测"><svg><use href="#i-expand"/></svg></button><button class="camera-button" id="camera-btn"><svg><use href="#i-hand"/></svg><span>开启手势</span></button></div>
+  </header>
+
+  <main>
+    <section class="intro hud" id="intro">
+      <div class="eyebrow"><span></span> A SMALL GESTURE. AN INFINITE SKY.</div>
+      <h1>把星河，<br>握在<span>掌心。</span></h1>
+      <p>伸手，让星光循你而动。<br>从山野的漫天星轨，到一颗恒星的呼吸。</p>
+      <button class="explore-button" id="explore-btn">驶入银河 <svg><use href="#i-arrow"/></svg></button>
+      <div class="intro-note">无需摄像头也能探索 · 拖动与滚轮即刻出发</div>
+    </section>
+
+    <aside class="scene-caption hud"><span class="index" id="scene-index">01 / 03</span><div><span class="caption-en" id="caption-en">CIRCUMPOLAR</span><span id="caption-cn">地平线之上的时间</span></div></aside>
+
+    <aside id="star-panel" class="star-panel hud" hidden>
+      <span class="eyebrow">STELLAR PORTRAIT</span><h2 id="star-name">ASTRA</h2><p id="star-description"></p>
+      <dl><div><dt>模拟表面温度</dt><dd id="star-temp">—</dd></div><div><dt>模拟恒星类别</dt><dd id="star-kind">—</dd></div></dl>
+      <p class="fine-print">艺术化恒星模型 · 非真实天体测量<br>拖动环绕观察，滚轮调整距离</p>
+      <button id="back-btn" class="outline-button">← 返回星海</button>
+    </aside>
+
+    <aside class="camera-panel hud" id="camera-panel" hidden>
+      <div class="camera-view"><video id="camera-video" autoplay muted playsinline></video><canvas id="hand-overlay"></canvas><span class="live-badge">LOCAL VISION</span></div>
+      <div class="camera-state"><i></i><span id="camera-state">正在准备识别</span></div>
+      <p>画面只在你的浏览器中处理</p>
+    </aside>
+
+    <div class="gesture-tip hud" id="gesture-tip" hidden><span class="signal-dot"></span><span id="gesture-text">张开手掌，慢慢移动</span></div>
+    <div id="cursor" class="hand-cursor" hidden aria-hidden="true"></div>
+
+    <div class="control-deck hud">
+      <nav class="scene-switch" aria-label="观测场景"><button data-mode="trails" class="active" aria-pressed="true"><span>01</span>环极星轨</button><button data-mode="galaxy" aria-pressed="false"><span>02</span>银河漫游</button><button id="featured-btn"><span>03</span>抵近恒星</button></nav>
+      <div class="control-row">
+        <div class="motion-controls"><button class="icon-button" id="pause-btn" title="暂停时间（空格）" aria-label="暂停时间"><svg><use href="#i-pause"/></svg></button><button class="icon-button" id="reset-btn" title="重置视角（R）" aria-label="重置视角"><svg><use href="#i-reset"/></svg></button></div>
+        <label class="range-control"><span>星轨曝光</span><input id="exposure" type="range" min="0" max="100" value="55" aria-label="星轨曝光"><output id="exposure-value">55%</output></label>
+        <label class="range-control speed-control"><span>时间流速</span><input id="speed" type="range" min="0" max="200" value="65" aria-label="时间流速"><output id="speed-value">0.65×</output></label>
+        <div class="zoom-controls"><button id="zoom-out" title="拉远" aria-label="拉远">−</button><svg><use href="#i-star"/></svg><button id="zoom-in" title="拉近" aria-label="拉近">+</button></div>
+      </div>
+    </div>
+  </main>
+  <footer class="bottomline hud"><span><i></i><span id="render-state">正在点亮星海</span></span><span class="mouse-hint">拖动环绕 <b>·</b> 滚轮缩放 <b>·</b> 点星抵近</span><button id="about-btn">程序化宇宙 · 关于</button></footer>
+  <button class="zen-button icon-button" id="zen-btn" title="纯净观测（H）" aria-label="隐藏或显示界面"><svg><use href="#i-eye"/></svg></button>
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+  <div class="loading" id="loading"><div class="orbit-loader"><i></i></div><span>正在点亮星海</span><small>PREPARING YOUR OBSERVATORY</small></div>
+  <div class="fatal" id="fatal" hidden><h2>星海暂时未能加载</h2><p id="fatal-text">请使用支持 WebGL 的新版浏览器。</p><button onclick="location.reload()">重新加载</button></div>
+
+  <dialog id="guide-dialog" class="modal"><button class="dialog-close icon-button" data-close aria-label="关闭指南"><svg><use href="#i-close"/></svg></button><span class="eyebrow">YOUR HANDS, YOUR UNIVERSE</span><h2>给宇宙一个手势。</h2><p class="modal-lead">允许摄像头后，让手掌完整进入画面。光线均匀、背景简单时识别更稳定。</p><div class="gesture-grid"><article><span class="gesture-symbol">↔</span><h3>张掌移动</h3><p>用一只张开的手掌，缓缓改变观测方位。</p></article><article><span class="gesture-symbol">⟷</span><h3>双手开合</h3><p>双手拉开靠近星海，双手收拢拉远视野。</p></article><article><span class="gesture-symbol">◎</span><h3>捏合选星</h3><p>食指与拇指捏合并稍停，在指尖所指位置选择恒星。</p></article><article><span class="gesture-symbol">Ⅱ</span><h3>握拳停驻</h3><p>握拳稍停，暂停或继续时间；松开后可再次操作。</p></article></div><div class="guide-bottom"><strong>鼠标与触屏</strong><p>拖动转动、滚轮或双指缩放，点击恒星靠近观察。底部按钮可切换场景、返回与调整效果。</p><p class="keys"><kbd>空格</kbd> 暂停 <kbd>R</kbd> 复位 <kbd>H</kbd> 纯净 <kbd>Esc</kbd> 返回</p></div><button class="camera-button" id="guide-camera-btn"><svg><use href="#i-hand"/></svg>开启手势探索</button><p class="fine-print">摄像头默认关闭。识别在本地进行，不上传、录制或保存画面。</p></dialog>
+
+  <dialog id="about-dialog" class="modal about-modal"><button class="dialog-close icon-button" data-close aria-label="关闭关于"><svg><use href="#i-close"/></svg></button><span class="eyebrow">OPEN SOURCE, OPEN SKY</span><h2>星汐 ASTRA</h2><p class="modal-lead">一座可以用双手触碰的数字观星台。</p><p>环极星轨参考长曝光天文摄影，银河与恒星由程序化模型生成。星体编号、颜色与温度用于艺术演示，不对应真实星表；银河漫游和近景是尺度变换后的视觉模拟。</p><h3>由这些开源项目支持</h3><ul class="source-list"><li><a href="https://github.com/mrdoob/three.js" target="_blank" rel="noopener">Three.js <span>↗</span></a><small>MIT · 三维渲染</small></li><li><a href="https://github.com/google-ai-edge/mediapipe" target="_blank" rel="noopener">MediaPipe <span>↗</span></a><small>Apache 2.0 · 手部关键点识别</small></li><li><a href="https://github.com/Wlarskog/gesture-particles" target="_blank" rel="noopener">gesture-particles <span>↗</span></a><small>MIT · 移植 One Euro 平滑滤波器</small></li></ul><p>为保证低延迟与独立运行，识别组件和模型随网站加载。首次开启手势可能需要片刻；关闭摄像头会停止视频轨道。</p><label class="quality-label">画质 <select id="quality"><option value="auto">自动平衡</option><option value="high">精致</option><option value="low">流畅优先</option></select></label><a class="license-link" href="./credits.html" target="_blank" rel="noopener">查看版本、许可证与来源 →</a></dialog>
+  <noscript><div class="fatal">需要启用 JavaScript 才能体验互动星空。</div></noscript>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

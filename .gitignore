@@ -1,0 +1,35 @@
+# Machine-specific hosting and agent configuration
+.openai/
+.codex/
+.agents/
+
+# Credentials and local environment
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Development dependencies and temporary output
+node_modules/
+__pycache__/
+*.pyc
+tmp/
+temp/
+outputs/
+coverage/
+playwright-report/
+test-results/
+*.log
+*.tmp
+
+# Distribute packaged downloads through Releases
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+
+# OS metadata
+.DS_Store
+Thumbs.db
+desktop.ini
